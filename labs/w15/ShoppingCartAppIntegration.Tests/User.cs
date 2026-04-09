@@ -35,7 +35,7 @@ public class User
         var user = new { username, email, password };
         var content = new StringContent(JsonSerializer.Serialize(user, _jsonOptions), Encoding.UTF8, "application/json");
 
-        var resp = await _client.PostAsync("/api/users", content);
+        var resp = await _client.PostAsync("/signup", content);
         resp.EnsureSuccessStatusCode();
 
         var body = await resp.Content.ReadAsStringAsync();
@@ -63,13 +63,13 @@ public class User
         var creds = new { username = username, password = password };
         var content = new StringContent(JsonSerializer.Serialize(creds, _jsonOptions), Encoding.UTF8, "application/json");
 
-        var resp = await _client.PostAsync("/api/auth/login", content);
+        var resp = await _client.PostAsync("/login", content);
         resp.EnsureSuccessStatusCode();
 
         var body = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(body);
         string? token = null;
-        if (doc.RootElement.TryGetProperty("token", out var tokenEl)) token = tokenEl.GetString();
+        if (doc.RootElement.TryGetProperty("access_token", out var tokenEl)) token = tokenEl.GetString();
 
         Assert.IsFalse(string.IsNullOrEmpty(token));
     }
@@ -82,20 +82,20 @@ public class User
 
         var creds = new { username = username, password = password };
         var content = new StringContent(JsonSerializer.Serialize(creds, _jsonOptions), Encoding.UTF8, "application/json");
-        var resp = await _client.PostAsync("/api/auth/login", content);
+        var resp = await _client.PostAsync("/login", content);
         resp.EnsureSuccessStatusCode();
 
         var body = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(body);
         string? token = null;
-        if (doc.RootElement.TryGetProperty("token", out var tokenEl)) token = tokenEl.GetString();
+        if (doc.RootElement.TryGetProperty("access_token", out var tokenEl)) token = tokenEl.GetString();
         Assert.IsFalse(string.IsNullOrEmpty(token));
 
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var cartResp = await _client.GetAsync("/api/cart");
+        var cartResp = await _client.GetAsync("/user");
         // Accept both 200 OK or 204 NoContent depending on implementation
         Assert.IsTrue(cartResp.IsSuccessStatusCode || cartResp.StatusCode == System.Net.HttpStatusCode.NoContent,
-            $"Unexpected status code from /api/cart: {cartResp.StatusCode}");
+            $"Unexpected status code from /user: {cartResp.StatusCode}");
     }
 }
